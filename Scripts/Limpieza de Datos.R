@@ -77,3 +77,8 @@ n_words2 <- words_train %>%
   head(100)
 
 wordcloud2(data = n_words2)
+
+
+## Buscar Missing values 
+test[is.na(test), ]
+train[is.na(train), ]
