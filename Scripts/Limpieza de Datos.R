@@ -78,7 +78,9 @@ n_words2 <- words_train %>%
 
 wordcloud2(data = n_words2)
 
-
 ## Buscar Missing values 
 test[is.na(test), ]
 train[is.na(train), ]
+
+### Visualizar numero de tweets por personaje de interés
+table(train$name)
