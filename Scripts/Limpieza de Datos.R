@@ -8,8 +8,8 @@ p_load(tidyverse, janitor, tm, stringi, tidytext, stopwords, wordcloud2, udpipe,
        ggcorrplot) 
 
 ## Cargar datos 
-test <- read.csv(url("https://github.com/SofiaQuiroga/Repositorio_Taller4_BDML/blob/main/Data/test.csv?raw=true"))
-train <- read.csv(url("https://github.com/SofiaQuiroga/Repositorio_Taller4_BDML/blob/main/Data/train.csv?raw=true"))
+test <- read.csv(url("https://github.com/SofiaQuiroga/Repositorio_Taller4_BDML/blob/main/Data/test.csv?raw=true"),encoding = "UTF-8")
+train <- read.csv(url("https://github.com/SofiaQuiroga/Repositorio_Taller4_BDML/blob/main/Data/train.csv?raw=true"),encoding = "UTF-8")
 
 ## Limpiar variable de texto "tweets"
 # Todo en minuscula
