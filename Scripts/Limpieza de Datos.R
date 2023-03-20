@@ -84,3 +84,14 @@ train[is.na(train), ]
 
 ### Visualizar numero de tweets por personaje de interés
 table(train$name)
+
+# Cantidad de tweets por persona de interes
+n_tweets = train %>% # analisis descriptivo por político
+  group_by(name) %>%
+  summarise(n = n()) %>%
+  ungroup()
+
+n_tweets
+
+barplot(height = n_tweets$n, names = n_tweets$name, col = "#69b3a2", 
+        xlab = "Personaje político", ylab =  "Número de tweets", ylim = c(0, 4000))
