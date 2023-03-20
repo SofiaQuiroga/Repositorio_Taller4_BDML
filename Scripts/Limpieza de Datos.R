@@ -95,3 +95,90 @@ n_tweets
 
 barplot(height = n_tweets$n, names = n_tweets$name, col = "#69b3a2", 
         xlab = "Personaje político", ylab =  "Número de tweets", ylim = c(0, 4000))
+
+## Categorizar
+train <- train %>% mutate(name = factor(name, levels = c("Lopez", "Petro", "Uribe"), labels = c(1, 2, 3)))
+
+setwd("C:/Users/Sofia/OneDrive - Universidad de los Andes/8. Octavo Semestre/Big Data y Machine Learning/Talleres/Taller 4")
+save(test, file = "test.rds")
+save(train, file = "train.rds")
+
+
+## Cargar paquetes
+require("pacman")
+p_load(tidyverse, ggthemes, ggpubr)
+
+
+## Lematizar palabras
+udpipe:: udpipe_download_model("spanish")
+model <- udpipe_load_model(file = "spanish-gsd-ud-2.5-191206.udpipe")
+
+palabras_unicas_test <- words_test %>% distinct(word)
+palabras_unicas_train <- words_train %>% distinct(word)
+
+results_test <- udpipe_annotate(model, x = palabras_unicas_test$word)
+results_test <- as_tibble(results_test)
+
+results_test <- results_test %>% 
+  select(token, lemma) %>%
+  rename("word" = "token")
+
+words_test <- words_test %>%
+  left_join(results_test, by = "word", multiple = "all")
+
+words_test[is.na(words_test$lemma), "lemma"] <- words_test[is.na(words_test$lemma), "word"]
+
+results_train <- udpipe_annotate(model, x = palabras_unicas_train$word)
+results_train <- as_tibble(results_train)
+
+results_train <- results_train %>% 
+  select(token, lemma) %>%
+  rename("word" = "token")
+
+words_train <- words_train %>%
+  left_join(results_train, by = "word", multiple = "all")
+
+words_train[is.na(words_train$lemma), "lemma"] <- words_train[is.na(words_train$lemma), "word"]
+
+
+## Volver a nivel de Tweet
+test_clean <- words_test %>%
+  group_by(id) %>%
+  summarise(texto = str_c(lemma, collapse = " ")) %>%
+  ungroup()
+
+train_clean <- words_train %>%
+  group_by(id, name) %>%
+  summarise(texto = str_c(lemma, collapse = " ")) %>%
+  ungroup()
+
+train_clean <- train_clean %>% mutate(name = factor(name, levels = c("Lopez", "Petro", "Uribe"), labels = c(1, 2, 3)))
+
+save(test_clean, file = "test_clean.rds")
+save(train_clean, file = "train_clean.rds")
+
+## Corpus 
+tm_corpus_train <- Corpus(VectorSource(x = train_clean$texto))
+str(tm_corpus_train)
+
+tf_idf_train <- TermDocumentMatrix(tm_corpus_train, 
+                                   control = list(weighting = weightTfIdf))
+
+tf_idf_train <- as.matrix(tf_idf_train) %>% 
+  t() %>% 
+  as.data.frame()
+
+
+tm_corpus_test <- Corpus(VectorSource(x = test_clean$texto))
+str(tm_corpus_test)
+
+tf_idf_test <- TermDocumentMatrix(tm_corpus_test, 
+                                  control = list(weighting = weightTfIdf))
+
+tf_idf_test <- as.matrix(tf_idf_test) %>% 
+  t() %>% 
+  as.data.frame()
+
+## Guardar bases
+save(tf_idf_test, file = "tf_idf_test.rds")
+save(tf_idf_train, file = "tf_idf_train.rds")
