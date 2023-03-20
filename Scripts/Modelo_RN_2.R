@@ -3,7 +3,7 @@ library(pacman)
 
 # Cargar las librer?as listadas e instalarlas en caso de ser necesario
 p_load(tidyverse, janitor, tm, stringi, tidytext, stopwords, wordcloud2, udpipe,
-       ggcorrplot, keras) 
+       ggcorrplot, keras,RWeka) 
 
 # Vamos a lematizar
 #udpipe::udpipe_download_model('spanish')
@@ -133,7 +133,7 @@ summary(model2)
 
 model2 %>% fit(
   train_X, train_Y, 
-  epochs = 10, 
+  epochs = 30, 
   batch_size = 300,
   validation_split = 0.2
 )
