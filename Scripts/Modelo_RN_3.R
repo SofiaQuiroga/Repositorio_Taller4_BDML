@@ -1,12 +1,3 @@
-# Cargar pacman (contiene la funci?n p_load)
-library(pacman) 
-
-# Cargar las librer?as listadas e instalarlas en caso de ser necesario
-p_load(tidyverse, janitor, tm, stringi, tidytext, stopwords, wordcloud2, udpipe,
-       ggcorrplot, keras,RWeka, tokenizers) 
-
-# Vamos a lematizar
-#udpipe::udpipe_download_model('spanish')
 #train
 model <- udpipe_load_model(file = "spanish-gsd-ud-2.5-191206.udpipe")
 palabras_unicas <- words_train %>%
@@ -84,7 +75,7 @@ test_tf_idf[1, 1:10]
 columnas_seleccionadas <- colSums(train_tf_idf) %>%
   data.frame() %>%
   arrange(desc(.)) %>%
-  head(1000) %>%
+  head(300) %>%
   rownames()
 
 train_tf_idf_reducido <- train_tf_idf %>%
@@ -93,7 +84,7 @@ train_tf_idf_reducido <- train_tf_idf %>%
 columnas_seleccionadas2 <- colSums(test_tf_idf) %>%
   data.frame() %>%
   arrange(desc(.)) %>%
-  head(4415) %>%
+  head(300) %>%
   rownames()
 
 test_tf_idf_reducido <- test_tf_idf %>%
@@ -117,8 +108,7 @@ model <- keras_model_sequential()
 model2 <- keras_model_sequential() 
 
 model %>% 
-  layer_dense(units = 20, activation = 'relu',input_shape = c(4415)) %>% 
-  layer_dense(units = 10, activation = 'relu') %>%
+  layer_dense(units = 20, activation = 'relu',input_shape = c(300)) %>% 
   layer_dense(units = 3, activation = 'softmax')
 summary(model)
 model %>% compile(
@@ -126,7 +116,7 @@ model %>% compile(
   loss = 'categorical_crossentropy',
   metrics = c('CategoricalAccuracy')
 )
-model2 %>% fit(
+model %>% fit(
   train_X, train_Y, 
   epochs = 20, 
   batch_size = 15,
@@ -134,41 +124,9 @@ model2 %>% fit(
 )
 
 
-
-
-
-model2 %>% 
-  layer_dense(units = 500, activation = 'relu',input_shape = c(4415)) %>% 
-  layer_dropout(rate = 0.5) %>%
-  layer_dense(units = 300, activation = 'relu') %>%
-  layer_dropout(rate = 0.3) %>%
-  layer_dense(units = 100, activation = 'relu') %>%
-  layer_dropout(rate = 0.1) %>%
-  layer_dense(units = 50, activation = 'relu') %>%
-  layer_dropout(rate = 0.05) %>%
-  layer_dense(units = 10, activation = 'relu') %>%
-  layer_dropout(rate = 0.01) %>%
-  layer_dense(units = 3, activation = 'softmax')
-summary(model2)
-
-model2 %>% compile(
-  optimizer = 'adam',
-  loss = 'categorical_crossentropy',
-  metrics = c('CategoricalAccuracy')
-)
-summary(model2)
-
-model2 %>% fit(
-  train_X, train_Y, 
-  epochs = 15, 
-  batch_size = 100,
-  validation_split = 0.2
-)
-
-
 #Predecimos 
 
-y_hat <- model2  %>% predict(test_tf_idf_reducido2) 
+y_hat <- model  %>% predict(test_tf_idf_reducido2) 
 predict<- data.frame(test_clean$id,y_hat)
 y_hat<-data.frame(y_hat)
 
@@ -185,4 +143,4 @@ observacion_faltante
 extra<- data.frame(id= "cb9ac947c675464803342fc9", name = "Lopez")
 predict <- rbind(predict, extra)
 #######################################
-write.csv(predict, 'R_Neuronal3.csv',row.names=FALSE) 
+write.csv(predict, 'R_Neuronal4.csv',row.names=FALSE) 

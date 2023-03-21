@@ -1,56 +1,15 @@
-# Cargar pacman (contiene la funci?n p_load)
-library(pacman) 
-
-# Cargar las librer?as listadas e instalarlas en caso de ser necesario
-p_load(tidyverse, janitor, tm, stringi, tidytext, stopwords, wordcloud2, udpipe,
-       ggcorrplot, keras,RWeka, tokenizers) 
-
-# Vamos a lematizar
-#udpipe::udpipe_download_model('spanish')
-#train
-model <- udpipe_load_model(file = "spanish-gsd-ud-2.5-191206.udpipe")
-palabras_unicas <- words_train %>%
-  distinct(word)
-udpipe_results <- udpipe_annotate(model, x = palabras_unicas$word)
-udpipe_results <- as_tibble(udpipe_results)
-udpipe_results <- udpipe_results %>% 
-  select(token, lemma) %>%
-  rename("word" = "token")
-words_train <- words_train %>%
-  left_join(udpipe_results, by = "word", multiple = "all")
-words_train[is.na(words_train$lemma), "lemma"] <- words_train[is.na(words_train$lemma), "word"]
-#test
-palabras_unicas2 <- words_test %>%
-  distinct(word)
-udpipe_results2 <- udpipe_annotate(model, x = palabras_unicas2$word)
-udpipe_results2 <- as_tibble(udpipe_results2)
-udpipe_results2 <- udpipe_results2 %>% 
-  select(token, lemma) %>%
-  rename("word" = "token")
-words_test <- words_test %>%
-  left_join(udpipe_results, by = "word", multiple = "all")
-words_test[is.na(words_test$lemma), "lemma"] <- words_test[is.na(words_test$lemma), "word"]
-
-#eliminamos las palabras que menos aparecen
-palabras_eliminar <- words_train %>%
-  count(lemma) %>%
-  filter(n < 5)
-
-words_train <- words_train %>%
-  anti_join(palabras_eliminar, by = "lemma") 
-
-
 #Volvemos a nuestro formato original. Comentario por tweets
 train_clean <- words_train %>%
   group_by(id,name) %>% 
-  summarise(text = str_c(lemma, collapse = " ")) %>%
+  summarise(text = str_c(word, collapse = " ")) %>%
   ungroup()
 
 test_clean <- words_test %>%
   group_by(id) %>% 
-  summarise(text = str_c(lemma, collapse = " ")) %>%
+  summarise(text = str_c(word, collapse = " ")) %>%
   ungroup()
 
+###
 #### creamos la matriz TF-IDF
 # Creamos un corpus
 #train
@@ -84,7 +43,7 @@ test_tf_idf[1, 1:10]
 columnas_seleccionadas <- colSums(train_tf_idf) %>%
   data.frame() %>%
   arrange(desc(.)) %>%
-  head(1000) %>%
+  head(300) %>%
   rownames()
 
 train_tf_idf_reducido <- train_tf_idf %>%
@@ -93,7 +52,7 @@ train_tf_idf_reducido <- train_tf_idf %>%
 columnas_seleccionadas2 <- colSums(test_tf_idf) %>%
   data.frame() %>%
   arrange(desc(.)) %>%
-  head(4415) %>%
+  head(300) %>%
   rownames()
 
 test_tf_idf_reducido <- test_tf_idf %>%
@@ -114,11 +73,10 @@ dim(train_X)
 rm(model2)
 
 model <- keras_model_sequential() 
-model2 <- keras_model_sequential() 
+
 
 model %>% 
-  layer_dense(units = 20, activation = 'relu',input_shape = c(4415)) %>% 
-  layer_dense(units = 10, activation = 'relu') %>%
+  layer_dense(units = 20, activation = 'relu',input_shape = c(300)) %>% 
   layer_dense(units = 3, activation = 'softmax')
 summary(model)
 model %>% compile(
@@ -126,19 +84,15 @@ model %>% compile(
   loss = 'categorical_crossentropy',
   metrics = c('CategoricalAccuracy')
 )
-model2 %>% fit(
+model %>% fit(
   train_X, train_Y, 
-  epochs = 20, 
-  batch_size = 15,
+  epochs = 50, 
+  batch_size = 300,
   validation_split = 0.2
 )
 
-
-
-
-
 model2 %>% 
-  layer_dense(units = 500, activation = 'relu',input_shape = c(4415)) %>% 
+  layer_dense(units = 500, activation = 'relu',input_shape = c(300)) %>% 
   layer_dropout(rate = 0.5) %>%
   layer_dense(units = 300, activation = 'relu') %>%
   layer_dropout(rate = 0.3) %>%
@@ -160,8 +114,8 @@ summary(model2)
 
 model2 %>% fit(
   train_X, train_Y, 
-  epochs = 15, 
-  batch_size = 100,
+  epochs = 50, 
+  batch_size = 300,
   validation_split = 0.2
 )
 
@@ -185,4 +139,4 @@ observacion_faltante
 extra<- data.frame(id= "cb9ac947c675464803342fc9", name = "Lopez")
 predict <- rbind(predict, extra)
 #######################################
-write.csv(predict, 'R_Neuronal3.csv',row.names=FALSE) 
+write.csv(predict, 'R_Neuronal5.csv',row.names=FALSE) 
