@@ -2,6 +2,7 @@
 ## Clean the workspace
 rm(list=ls())
 
+
 ## Cargar paquetes
 require("pacman")
 p_load(tidyverse, janitor, tm, stringi, tidytext, stopwords, wordcloud2, udpipe,
