@@ -102,15 +102,15 @@ model3 <- keras_model_sequential()
 
 model3 %>% 
   layer_dense(units = 100, activation = 'relu',input_shape = c(2000)) %>% 
-  layer_dropout(rate = 0.3) %>%
+  layer_dropout(rate = 0.2) %>%
   layer_dense(units = 50, activation = 'relu') %>%
-  layer_dropout(rate = 0.3) %>%
-  layer_dense(units = 3, activation = 'relu')
+  layer_dropout(rate = 0.2) %>%
+  layer_dense(units = 3, activation = 'softmax')
 summary(model3)
 
 model3 %>% compile(
   optimizer = 'adam',
-  loss = 'sparse_categorical_crossentropy',
+  loss = 'categorical_crossentropy',
   metrics = c('CategoricalAccuracy')
 )
 
@@ -119,7 +119,56 @@ model3 %>% fit(
   Xtrain, Ytrain, 
   epochs = 4, 
   batch_size = 2^4,
-  validation_split = 0.5
+  validation_split = 0.3
 )
-#Error con sparse loss function
+#Categorical Accuracy no cambia
+
+#Modelo de prueba
+model <- keras_model_sequential() 
+model4 <- keras_model_sequential() 
+
+model4 %>% 
+  layer_dense(units = 200, activation = 'relu',input_shape = c(2000)) %>% 
+  layer_dropout(rate = 0.2) %>%
+  layer_dense(units = 100, activation = 'relu') %>%
+  layer_dropout(rate = 0.2) %>%
+  layer_dense(units = 3, activation = 'softmax')
+summary(model4)
+
+model4 %>% compile(
+  optimizer = 'adam',
+  loss = 'categorical_crossentropy',
+  metrics = c('CategoricalAccuracy')
+)
+
+
+model4 %>% fit(
+  Xtrain, Ytrain, 
+  epochs = 5, 
+  batch_size = 2^5,
+  validation_split = 0.3
+)
+
+#Predicciones
+
+yhat2 <- model4  %>% predict(test_tf_idf_reducido2) 
+
+prediccion2<- data.frame(test_clean$id,yhat2)
+yhat2<-data.frame(yhat2)
+
+max_col <- max.col(yhat2, ties.method = "last")
+col_names <- names(yhat2)[max_col]
+prediccion2$name <- col_names
+prediccion2$name <- factor(prediccion2$name, levels = c("X1", "X2", "X3"), labels = c("Lopez", "Petro", "Uribe"))
+prediccion2<- prediccion2[,-c(2,3,4)]
+names(prediccion2)[1] <- "id"
+
+#Corrección al tweet de solo emojis
+test2 <- read.csv(url("https://github.com/SofiaQuiroga/Repositorio_Taller4_BDML/blob/main/Data/test.csv?raw=true"),encoding = "UTF-8")
+observacion_faltante <- setdiff(test2$id,prediccion$id)
+observacion_faltante
+extra<- data.frame(id= "cb9ac947c675464803342fc9", name = "Lopez")
+prediccion2 <- rbind(prediccion2, extra)
+
+write.csv(prediccion2, 'Modelo_RedNeuronal2.csv',row.names=FALSE) 
 
