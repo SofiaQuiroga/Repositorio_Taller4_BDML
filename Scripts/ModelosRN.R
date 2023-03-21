@@ -172,3 +172,54 @@ prediccion2 <- rbind(prediccion2, extra)
 
 write.csv(prediccion2, 'Modelo_RedNeuronal2.csv',row.names=FALSE) 
 
+#Modelo de prueba
+model <- keras_model_sequential() 
+model5 <- keras_model_sequential() 
+
+
+model5 %>% 
+  layer_dense(units = 100, activation = 'tanh',input_shape = c(2000)) %>% 
+  layer_dropout(rate = 0.2) %>%
+  layer_dense(units = 50, kernel_regularizer = regularizer_l2(0.01), activation = 'tanh') %>%
+  layer_dropout(rate = 0.2) %>%
+  layer_dense(units = 3, kernel_regularizer = regularizer_l2(0.01), activation = 'softmax')
+summary(model5)
+
+model5 %>% compile(
+  optimizer = 'adam',
+  loss = 'categorical_crossentropy',
+  metrics = c('CategoricalAccuracy')
+)
+
+
+model5 %>% fit(
+  Xtrain, Ytrain, 
+  epochs = 5, 
+  batch_size = 2^5,
+  validation_split = 0.3
+)
+
+#Predicciones
+
+yhat3 <- model5  %>% predict(test_tf_idf_reducido2) 
+
+prediccion3<- data.frame(test_clean$id,yhat3)
+yhat3<-data.frame(yhat3)
+
+max_col <- max.col(yhat3, ties.method = "last")
+col_names <- names(yhat3)[max_col]
+prediccion3$name <- col_names
+prediccion3$name <- factor(prediccion3$name, levels = c("X1", "X2", "X3"), labels = c("Lopez", "Petro", "Uribe"))
+prediccion3<- prediccion3[,-c(2,3,4)]
+names(prediccion3)[1] <- "id"
+
+#Corrección al tweet de solo emojis
+test2 <- read.csv(url("https://github.com/SofiaQuiroga/Repositorio_Taller4_BDML/blob/main/Data/test.csv?raw=true"),encoding = "UTF-8")
+observacion_faltante <- setdiff(test2$id,prediccion$id)
+observacion_faltante
+extra<- data.frame(id= "cb9ac947c675464803342fc9", name = "Lopez")
+prediccion3 <- rbind(prediccion3, extra)
+
+write.csv(prediccion3, 'ModeloRedNeuronal4.csv',row.names=FALSE) 
+
+
